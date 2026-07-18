@@ -5,7 +5,7 @@ import Link from "next/link";
 import { users } from "@/lib/data";
 import { Avatar } from "@/components/ui/Avatar";
 import { cn, formatPoints, formatNumber, ratingColor } from "@/lib/utils";
-import { ChevronDown, Crown, Trophy } from "lucide-react";
+import { ChevronDown, Trophy } from "lucide-react";
 
 type Metric = "overall" | "accuracy" | "profit" | "research" | "debate";
 
@@ -65,11 +65,11 @@ export default function LeaderboardPage() {
           >
             <span
               className={cn(
-                "flex w-7 shrink-0 items-center justify-center text-sm font-bold tabular-nums",
+                "flex w-8 shrink-0 items-center justify-center text-sm font-bold tabular-nums",
                 i === 0 ? "text-primary" : "text-content-secondary"
               )}
             >
-              {i === 0 ? <Crown className="h-4 w-4" /> : i + 1}
+              #{i + 1}
             </span>
             <Avatar src={u.avatar} alt={u.name} size={44} ring={i === 0} />
             <div className="min-w-0 flex-1">

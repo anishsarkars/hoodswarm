@@ -45,7 +45,7 @@ export function SearchDialog({
           autoFocus
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Search topics, users, markets, beliefs"
+          placeholder="Search beliefs..."
           className="w-full bg-transparent text-sm outline-none placeholder:text-content-secondary/60"
         />
         <kbd className="hidden rounded-md border border-border px-1.5 py-0.5 text-[10px] text-content-secondary sm:block">
