@@ -68,6 +68,8 @@ export function SubmitBeliefModal({
       confidence,
       riskFactors: risks.map((s) => s.trim()).filter(Boolean),
     });
+    // Guests are redirected to sign-in by the store; nothing to spawn.
+    if (!belief) return;
     setPhase("spawning");
     setTimeout(() => {
       onClose();

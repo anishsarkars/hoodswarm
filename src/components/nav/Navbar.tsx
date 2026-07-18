@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { Bell, Menu, Search, X } from "lucide-react";
 import { Logo } from "./Logo";
@@ -9,7 +9,7 @@ import { SearchDialog } from "./SearchDialog";
 import { NotificationsMenu } from "./NotificationsMenu";
 import { Avatar } from "@/components/ui/Avatar";
 import { useStore } from "@/lib/store";
-import { currentUser } from "@/lib/data";
+import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -21,7 +21,9 @@ const NAV = [
 
 export function Navbar() {
   const pathname = usePathname();
+  const router = useRouter();
   const { unread } = useStore();
+  const { user, signOut } = useAuth();
   const [search, setSearch] = useState(false);
   const [notif, setNotif] = useState(false);
   const [menu, setMenu] = useState(false);
@@ -29,6 +31,14 @@ export function Navbar() {
 
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(href + "/");
+
+  const handleSignOut = async () => {
+    setProfileMenu(false);
+    setMenu(false);
+    await signOut();
+    router.push("/");
+    router.refresh();
+  };
 
   return (
     <>
@@ -79,69 +89,70 @@ export function Navbar() {
               <NotificationsMenu open={notif} onClose={() => setNotif(false)} />
             </div>
 
-            <div className="relative hidden md:block">
-              <button
-                onClick={() => setProfileMenu((v) => !v)}
-                className="ml-1 flex items-center rounded-full transition-transform hover:scale-105"
-                aria-label="Profile menu"
-              >
-                <Avatar src={currentUser.avatar} alt={currentUser.name} size={32} />
-              </button>
-              <AnimatePresence>
-                {profileMenu && (
-                  <>
-                    <div
-                      className="fixed inset-0 z-40"
-                      onClick={() => setProfileMenu(false)}
-                    />
-                    <motion.div
-                      initial={{ opacity: 0, y: 8, scale: 0.98 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 6, scale: 0.98 }}
-                      transition={{ duration: 0.15 }}
-                      className="absolute right-0 top-11 z-50 w-56 rounded-2xl border border-border bg-card p-1.5 shadow-2xl"
-                    >
-                      <div className="flex items-center gap-3 rounded-xl px-3 py-2.5">
-                        <Avatar src={currentUser.avatar} alt={currentUser.name} size={36} />
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-semibold">{currentUser.name}</p>
-                          <p className="truncate text-xs text-content-secondary">
-                            @{currentUser.username}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="my-1 h-px bg-border" />
-                      {[
-                        { href: "/profile", label: "Profile" },
-                        { href: "/settings", label: "Settings" },
-                        { href: "/leaderboard", label: "Leaderboard" },
-                      ].map((i) => (
-                        <Link
-                          key={i.href}
-                          href={i.href}
-                          onClick={() => setProfileMenu(false)}
-                          className="block rounded-xl px-3 py-2 text-sm text-content-secondary transition-colors hover:bg-white/[0.05] hover:text-white"
-                        >
-                          {i.label}
-                        </Link>
-                      ))}
-                      <div className="my-1 h-px bg-border" />
-                      <Link
-                        href="/sign-in"
+            {user ? (
+              <div className="relative hidden md:block">
+                <button
+                  onClick={() => setProfileMenu((v) => !v)}
+                  className="ml-1 flex items-center rounded-full transition-transform hover:scale-105"
+                  aria-label="Profile menu"
+                >
+                  <Avatar src={user.avatar} alt={user.name} size={32} />
+                </button>
+                <AnimatePresence>
+                  {profileMenu && (
+                    <>
+                      <div
+                        className="fixed inset-0 z-40"
                         onClick={() => setProfileMenu(false)}
-                        className="block rounded-xl px-3 py-2 text-sm text-content-secondary transition-colors hover:bg-white/[0.05] hover:text-white"
+                      />
+                      <motion.div
+                        initial={{ opacity: 0, y: 8, scale: 0.98 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 6, scale: 0.98 }}
+                        transition={{ duration: 0.15 }}
+                        className="absolute right-0 top-11 z-50 w-56 rounded-2xl border border-border bg-card p-1.5 shadow-2xl"
                       >
-                        Sign out
-                      </Link>
-                    </motion.div>
-                  </>
-                )}
-              </AnimatePresence>
-            </div>
-
-            <Link href="/sign-in" className="btn-secondary hidden h-9 px-4 md:hidden">
-              Sign In
-            </Link>
+                        <div className="flex items-center gap-3 rounded-xl px-3 py-2.5">
+                          <Avatar src={user.avatar} alt={user.name} size={36} />
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-semibold">{user.name}</p>
+                            <p className="truncate text-xs text-content-secondary">
+                              @{user.username}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="my-1 h-px bg-border" />
+                        {[
+                          { href: "/profile", label: "Profile" },
+                          { href: "/settings", label: "Settings" },
+                          { href: "/leaderboard", label: "Leaderboard" },
+                        ].map((i) => (
+                          <Link
+                            key={i.href}
+                            href={i.href}
+                            onClick={() => setProfileMenu(false)}
+                            className="block rounded-xl px-3 py-2 text-sm text-content-secondary transition-colors hover:bg-white/[0.05] hover:text-white"
+                          >
+                            {i.label}
+                          </Link>
+                        ))}
+                        <div className="my-1 h-px bg-border" />
+                        <button
+                          onClick={handleSignOut}
+                          className="block w-full rounded-xl px-3 py-2 text-left text-sm text-content-secondary transition-colors hover:bg-white/[0.05] hover:text-white"
+                        >
+                          Sign out
+                        </button>
+                      </motion.div>
+                    </>
+                  )}
+                </AnimatePresence>
+              </div>
+            ) : (
+              <Link href="/sign-in" className="btn-primary hidden h-9 px-4 md:inline-flex">
+                Sign In
+              </Link>
+            )}
 
             <button
               onClick={() => setMenu((v) => !v)}
@@ -177,20 +188,38 @@ export function Navbar() {
                     {item.label}
                   </Link>
                 ))}
-                <Link
-                  href="/profile"
-                  onClick={() => setMenu(false)}
-                  className="rounded-xl px-4 py-2.5 text-sm font-medium text-content-secondary"
-                >
-                  Profile
-                </Link>
-                <Link
-                  href="/settings"
-                  onClick={() => setMenu(false)}
-                  className="rounded-xl px-4 py-2.5 text-sm font-medium text-content-secondary"
-                >
-                  Settings
-                </Link>
+                {user ? (
+                  <>
+                    <Link
+                      href="/profile"
+                      onClick={() => setMenu(false)}
+                      className="rounded-xl px-4 py-2.5 text-sm font-medium text-content-secondary"
+                    >
+                      Profile
+                    </Link>
+                    <Link
+                      href="/settings"
+                      onClick={() => setMenu(false)}
+                      className="rounded-xl px-4 py-2.5 text-sm font-medium text-content-secondary"
+                    >
+                      Settings
+                    </Link>
+                    <button
+                      onClick={handleSignOut}
+                      className="rounded-xl px-4 py-2.5 text-left text-sm font-medium text-content-secondary"
+                    >
+                      Sign out
+                    </button>
+                  </>
+                ) : (
+                  <Link
+                    href="/sign-in"
+                    onClick={() => setMenu(false)}
+                    className="btn-primary mx-4 mt-1 h-10"
+                  >
+                    Sign In
+                  </Link>
+                )}
               </div>
             </motion.nav>
           )}

@@ -4,11 +4,63 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { LogoMark } from "@/components/nav/Logo";
-import { ArrowRight, Bot, Mail, TrendingUp, Users } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
+import { ArrowRight, AtSign, Bot, Lock, Mail, User, Users, TrendingUp } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+type Mode = "signin" | "signup";
 
 export default function SignInPage() {
   const router = useRouter();
+  const [mode, setMode] = useState<Mode>("signup");
+  const [name, setName] = useState("");
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setInfo(null);
+    setLoading(true);
+    const supabase = createClient();
+
+    try {
+      if (mode === "signup") {
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: { name: name || username, username },
+            emailRedirectTo:
+              typeof window !== "undefined"
+                ? `${window.location.origin}/auth/callback`
+                : undefined,
+          },
+        });
+        if (error) throw error;
+        if (data.session) {
+          router.push("/");
+          router.refresh();
+        } else {
+          setInfo("Account created. Check your email to confirm, then sign in.");
+          setMode("signin");
+        }
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+        router.push("/");
+        router.refresh();
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="container-content flex min-h-[calc(100vh-9rem)] items-center justify-center py-10">
@@ -44,71 +96,139 @@ export default function SignInPage() {
           <div className="md:hidden">
             <LogoMark />
           </div>
-          <h1 className="mt-4 text-2xl font-bold tracking-tight md:mt-0">
-            Sign in to HoodSwarm
+
+          <div className="mb-6 mt-4 flex rounded-full border border-border bg-white/[0.02] p-1 md:mt-0">
+            {(["signup", "signin"] as Mode[]).map((m) => (
+              <button
+                key={m}
+                onClick={() => {
+                  setMode(m);
+                  setError(null);
+                  setInfo(null);
+                }}
+                className={cn(
+                  "flex-1 rounded-full py-2 text-sm font-semibold transition-colors",
+                  mode === m ? "bg-primary text-primary-foreground" : "text-content-secondary hover:text-white"
+                )}
+              >
+                {m === "signup" ? "Create account" : "Sign in"}
+              </button>
+            ))}
+          </div>
+
+          <h1 className="text-2xl font-bold tracking-tight">
+            {mode === "signup" ? "Join HoodSwarm" : "Welcome back"}
           </h1>
           <p className="mt-1.5 text-sm text-content-secondary">
-            Join the internet's belief network.
+            {mode === "signup"
+              ? "Create an account to share beliefs and vote."
+              : "Sign in to the internet's belief network."}
           </p>
 
-          <div className="mt-7 space-y-3">
-            <button
-              onClick={() => router.push("/")}
-              className="btn-secondary h-11 w-full justify-center"
-            >
-              <svg className="h-4 w-4" viewBox="0 0 24 24">
-                <path fill="#EA4335" d="M12 10.2v3.9h5.5c-.24 1.4-1.65 4.1-5.5 4.1-3.31 0-6-2.74-6-6.2s2.69-6.2 6-6.2c1.88 0 3.14.8 3.86 1.49l2.63-2.53C16.9 3.02 14.65 2 12 2 6.98 2 3 6.03 3 11s3.98 9 9 9c5.2 0 8.64-3.65 8.64-8.8 0-.59-.06-1.04-.14-1.5H12z" />
-              </svg>
-              Continue with Google
-            </button>
-            <button
-              onClick={() => router.push("/")}
-              className="btn-secondary h-11 w-full justify-center"
-            >
-              <svg className="h-4 w-4 fill-white" viewBox="0 0 24 24">
-                <path d="M16.365 1.43c0 1.14-.42 2.2-1.13 3.02-.85.98-2.24 1.73-3.4 1.64-.14-1.1.44-2.27 1.1-3 .74-.83 2.02-1.45 3.09-1.5.02.28.02.56.02.84h.32zM20.5 17.02c-.53 1.23-.79 1.78-1.47 2.87-.95 1.52-2.29 3.42-3.95 3.43-1.48.02-1.86-.96-3.86-.95-2 .01-2.42.97-3.9.95-1.66-.02-2.93-1.73-3.88-3.25C.9 15.66.6 10.9 2.4 8.35c1.03-1.44 2.66-2.35 4.2-2.35 1.56 0 2.55 1 3.85 1 1.26 0 2.03-1 3.84-1 1.37 0 2.82.75 3.85 2.04-3.38 1.85-2.83 6.68.36 8.98z" />
-              </svg>
-              Continue with Apple
-            </button>
-          </div>
+          <form onSubmit={submit} className="mt-7 space-y-3">
+            {mode === "signup" && (
+              <>
+                <Field
+                  icon={User}
+                  type="text"
+                  placeholder="Display name"
+                  value={name}
+                  onChange={setName}
+                  required
+                />
+                <Field
+                  icon={AtSign}
+                  type="text"
+                  placeholder="username"
+                  value={username}
+                  onChange={(v) => setUsername(v.replace(/[^a-zA-Z0-9_]/g, "").toLowerCase())}
+                  required
+                />
+              </>
+            )}
+            <Field
+              icon={Mail}
+              type="email"
+              placeholder="you@email.com"
+              value={email}
+              onChange={setEmail}
+              required
+            />
+            <Field
+              icon={Lock}
+              type="password"
+              placeholder="Password (min 6 characters)"
+              value={password}
+              onChange={setPassword}
+              required
+            />
 
-          <div className="my-6 flex items-center gap-3 text-xs text-content-secondary/60">
-            <div className="h-px flex-1 bg-border" />
-            OR
-            <div className="h-px flex-1 bg-border" />
-          </div>
+            {error && (
+              <p className="rounded-xl border border-bearish/30 bg-bearish/10 px-3 py-2 text-sm text-bearish">
+                {error}
+              </p>
+            )}
+            {info && (
+              <p className="rounded-xl border border-primary/30 bg-primary/10 px-3 py-2 text-sm text-primary">
+                {info}
+              </p>
+            )}
 
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              router.push("/");
-            }}
-          >
-            <label className="label mb-1.5 block">Email</label>
-            <div className="relative">
-              <Mail className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-content-secondary" />
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@email.com"
-                className="input pl-10"
-              />
-            </div>
-            <button type="submit" className="btn-primary mt-4 h-11 w-full">
-              Continue <ArrowRight className="h-4 w-4" />
+            <button type="submit" disabled={loading} className="btn-primary mt-1 h-11 w-full">
+              {loading
+                ? "Please wait…"
+                : mode === "signup"
+                ? "Create account"
+                : "Sign in"}
+              {!loading && <ArrowRight className="h-4 w-4" />}
             </button>
           </form>
 
           <p className="mt-6 text-center text-xs text-content-secondary">
-            Authentication is powered by Clerk in production. This demo signs you in
-            instantly.{" "}
+            {mode === "signup" ? "Already have an account? " : "New to HoodSwarm? "}
+            <button
+              onClick={() => setMode(mode === "signup" ? "signin" : "signup")}
+              className="text-primary hover:underline"
+            >
+              {mode === "signup" ? "Sign in" : "Create one"}
+            </button>
+            {" · "}
             <Link href="/" className="text-primary hover:underline">
               Explore as guest
             </Link>
           </p>
         </div>
       </div>
+    </div>
+  );
+}
+
+function Field({
+  icon: Icon,
+  type,
+  placeholder,
+  value,
+  onChange,
+  required,
+}: {
+  icon: React.ElementType;
+  type: string;
+  placeholder: string;
+  value: string;
+  onChange: (v: string) => void;
+  required?: boolean;
+}) {
+  return (
+    <div className="relative">
+      <Icon className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-content-secondary" />
+      <input
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        required={required}
+        className="input pl-10"
+      />
     </div>
   );
 }

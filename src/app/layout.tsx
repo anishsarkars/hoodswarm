@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import { AuthProvider } from "@/lib/auth";
 import { StoreProvider } from "@/lib/store";
 import { Navbar } from "@/components/nav/Navbar";
 import { SiteFooter } from "@/components/nav/SiteFooter";
@@ -26,11 +27,13 @@ export default function RootLayout({
   return (
     <html lang="en" className={inter.variable}>
       <body className="min-h-screen bg-background font-sans text-content-primary antialiased">
-        <StoreProvider>
-          <Navbar />
-          <main className="pb-20 pt-2">{children}</main>
-          <SiteFooter />
-        </StoreProvider>
+        <AuthProvider>
+          <StoreProvider>
+            <Navbar />
+            <main className="pb-20 pt-2">{children}</main>
+            <SiteFooter />
+          </StoreProvider>
+        </AuthProvider>
       </body>
     </html>
   );

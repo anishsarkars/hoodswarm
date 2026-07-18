@@ -10,7 +10,6 @@ import {
 } from "react";
 import { generateDebate } from "./ai";
 import {
-  currentUser,
   markets as seedMarkets,
   notifications as seedNotifications,
   beliefs as seedBeliefs,
@@ -23,7 +22,17 @@ import type {
   Notification,
   VoteSide,
 } from "./types";
-import { convictionLabel, uid } from "./utils";
+import { convictionLabel } from "./utils";
+import { createClient } from "@/lib/supabase/client";
+import { useAuth } from "@/lib/auth";
+import {
+  beliefRowToBelief,
+  commentRowToComment,
+  profileToUser,
+  type BeliefRow,
+  type CommentRow,
+  type ProfileRow,
+} from "@/lib/supabase/mappers";
 
 interface Position {
   marketId: string;
@@ -51,9 +60,15 @@ interface StoreState {
   notifications: Notification[];
   positions: Position[];
   votes: Record<string, VoteSide>; // beliefId -> side
-  submitBelief: (input: SubmitBeliefInput) => Belief;
+  isAuthed: boolean;
+  submitBelief: (input: SubmitBeliefInput) => Belief | null;
   voteBelief: (beliefId: string, side: VoteSide) => void;
-  addBeliefComment: (beliefId: string, body: string, side?: VoteSide, isChallenge?: boolean) => void;
+  addBeliefComment: (
+    beliefId: string,
+    body: string,
+    side?: VoteSide,
+    isChallenge?: boolean
+  ) => void;
   addMarketComment: (marketId: string, body: string) => void;
   trade: (marketId: string, side: "believe" | "cope", shares: number) => void;
   markAllRead: () => void;
@@ -62,53 +77,141 @@ interface StoreState {
 
 const StoreContext = createContext<StoreState | null>(null);
 
-const KEY = "hoodswarm-store-v2";
+function requireAuth(isAuthed: boolean): boolean {
+  if (!isAuthed) {
+    if (typeof window !== "undefined") window.location.href = "/sign-in";
+    return false;
+  }
+  return true;
+}
+
+function applyVoteToBelief(
+  b: Belief,
+  prevSide: VoteSide | undefined,
+  side: VoteSide
+): Belief {
+  const v = { ...b.votes };
+  if (prevSide) v[prevSide] = Math.max(0, v[prevSide] - 1);
+  v[side] += 1;
+  const total = v.believe + v.cope + v.neutral || 1;
+  const communityBelieve = (v.believe / total) * 100;
+  const conviction = Math.round(
+    communityBelieve * 0.4 + b.debate.consensus.believe * 0.35 + b.confidence * 0.25
+  );
+  return { ...b, votes: v, conviction, convictionLabel: convictionLabel(conviction) };
+}
 
 export function StoreProvider({ children }: { children: React.ReactNode }) {
-  const [beliefs, setBeliefs] = useState<Belief[]>(seedBeliefs);
+  const supabase = useMemo(() => createClient(), []);
+  const { user, userId, loading: authLoading } = useAuth();
+
+  const [dbBeliefs, setDbBeliefs] = useState<Belief[]>([]);
+  const [seedComments, setSeedComments] = useState<Record<string, Comment[]>>({});
   const [markets, setMarkets] = useState<Market[]>(seedMarkets);
-  const [notifications, setNotifications] = useState<Notification[]>(seedNotifications);
+  const [notifications, setNotifications] =
+    useState<Notification[]>(seedNotifications);
   const [positions, setPositions] = useState<Position[]>([]);
   const [votes, setVotes] = useState<Record<string, VoteSide>>({});
   const [hydrated, setHydrated] = useState(false);
 
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (parsed.userBeliefs) setBeliefs([...parsed.userBeliefs, ...seedBeliefs]);
-        if (parsed.votes) setVotes(parsed.votes);
-        if (parsed.positions) setPositions(parsed.positions);
-      }
-    } catch {
-      /* ignore */
-    }
-    setHydrated(true);
-  }, []);
+  const isAuthed = !!userId && !!user;
 
-  const persist = useCallback(
-    (next: { userBeliefs?: Belief[]; votes?: Record<string, VoteSide>; positions?: Position[] }) => {
-      try {
-        const raw = localStorage.getItem(KEY);
-        const prev = raw ? JSON.parse(raw) : {};
-        localStorage.setItem(KEY, JSON.stringify({ ...prev, ...next }));
-      } catch {
-        /* ignore */
+  // Beliefs shown = DB beliefs first, then seed demo beliefs (with any
+  // real comments attached to them merged in).
+  const beliefs = useMemo<Belief[]>(() => {
+    const seedsWithComments = seedBeliefs.map((b) =>
+      seedComments[b.id]
+        ? { ...b, comments: [...seedComments[b.id], ...b.comments] }
+        : b
+    );
+    return [...dbBeliefs, ...seedsWithComments];
+  }, [dbBeliefs, seedComments]);
+
+  // ── Load everything from Supabase ──────────────────────────
+  const loadData = useCallback(async () => {
+    const [{ data: beliefRows }, { data: profileRows }, { data: commentRows }] =
+      await Promise.all([
+        supabase.from("beliefs").select("*").order("created_at", { ascending: false }),
+        supabase.from("profiles").select("*"),
+        supabase.from("comments").select("*").order("created_at", { ascending: false }),
+      ]);
+
+    const profileMap = new Map(
+      (profileRows as ProfileRow[] | null ?? []).map((p) => [p.id, profileToUser(p)])
+    );
+
+    // Group comments by belief id.
+    const commentsByBelief: Record<string, Comment[]> = {};
+    for (const c of (commentRows as CommentRow[] | null ?? [])) {
+      const author = profileMap.get(c.user_id);
+      if (!author) continue;
+      (commentsByBelief[c.belief_id] ??= []).push(commentRowToComment(c, author));
+    }
+
+    const dbIds = new Set((beliefRows as BeliefRow[] | null ?? []).map((r) => r.id));
+    const mappedBeliefs = (beliefRows as BeliefRow[] | null ?? [])
+      .map((r) => {
+        const author = profileMap.get(r.author_id);
+        if (!author) return null;
+        return beliefRowToBelief(r, author, commentsByBelief[r.id] ?? []);
+      })
+      .filter((b): b is Belief => b !== null);
+
+    // Comments that belong to seed beliefs (ids not in the DB beliefs set).
+    const seedCommentMap: Record<string, Comment[]> = {};
+    for (const [beliefId, list] of Object.entries(commentsByBelief)) {
+      if (!dbIds.has(beliefId)) seedCommentMap[beliefId] = list;
+    }
+
+    setDbBeliefs(mappedBeliefs);
+    setSeedComments(seedCommentMap);
+    setHydrated(true);
+  }, [supabase]);
+
+  useEffect(() => {
+    if (authLoading) return;
+    loadData();
+  }, [authLoading, loadData]);
+
+  // Load the current user's votes.
+  useEffect(() => {
+    if (!userId) {
+      setVotes({});
+      return;
+    }
+    (async () => {
+      const { data } = await supabase
+        .from("belief_votes")
+        .select("belief_id, side")
+        .eq("user_id", userId);
+      const map: Record<string, VoteSide> = {};
+      for (const v of (data as { belief_id: string; side: VoteSide }[] | null ?? [])) {
+        map[v.belief_id] = v.side;
       }
+      setVotes(map);
+    })();
+  }, [supabase, userId]);
+
+  const pushNotification = useCallback(
+    (n: Omit<Notification, "id" | "createdAt" | "read">) => {
+      setNotifications((prev) => [
+        {
+          ...n,
+          id: `n_${Date.now()}`,
+          createdAt: new Date().toISOString(),
+          read: false,
+        },
+        ...prev,
+      ]);
     },
     []
   );
 
-  const pushNotification = useCallback((n: Omit<Notification, "id" | "createdAt" | "read">) => {
-    setNotifications((prev) => [
-      { ...n, id: uid("n"), createdAt: new Date().toISOString(), read: false },
-      ...prev,
-    ]);
-  }, []);
-
+  // ── Submit a belief ────────────────────────────────────────
   const submitBelief = useCallback(
-    (input: SubmitBeliefInput): Belief => {
+    (input: SubmitBeliefInput): Belief | null => {
+      if (!requireAuth(isAuthed) || !user) return null;
+
       const debate = generateDebate({
         title: input.title,
         topic: input.topic,
@@ -120,10 +223,15 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       const conviction = Math.round(
         debate.consensus.believe * 0.4 + input.confidence * 0.35 + 55 * 0.25
       );
+      const id =
+        typeof crypto !== "undefined" && crypto.randomUUID
+          ? crypto.randomUUID()
+          : `b_${Date.now()}`;
+
       const belief: Belief = {
-        id: uid("b"),
+        id,
         ...input,
-        author: currentUser,
+        author: user,
         createdAt: new Date().toISOString(),
         conviction,
         convictionLabel: convictionLabel(conviction),
@@ -132,14 +240,37 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         debate,
         comments: [],
       };
-      setBeliefs((prev) => {
-        const next = [belief, ...prev];
-        const userBeliefs = next.filter(
-          (b) => b.author.id === currentUser.id && !seedBeliefs.some((s) => s.id === b.id)
-        );
-        persist({ userBeliefs });
-        return next;
-      });
+
+      setDbBeliefs((prev) => [belief, ...prev]);
+
+      // Persist (fire and forget; UI already updated optimistically).
+      supabase
+        .from("beliefs")
+        .insert({
+          id,
+          author_id: user.id,
+          title: input.title,
+          prediction: input.prediction,
+          topic: input.topic,
+          category: input.category,
+          time_horizon: input.timeHorizon,
+          description: input.description,
+          evidence: input.evidence,
+          sources: input.sources,
+          confidence: input.confidence,
+          risk_factors: input.riskFactors,
+          conviction,
+          conviction_label: convictionLabel(conviction),
+          status: "debating",
+          debate,
+          believe_count: 1,
+          cope_count: 0,
+          neutral_count: 0,
+        })
+        .then(({ error }) => {
+          if (error) console.error("Failed to save belief:", error.message);
+        });
+
       pushNotification({
         type: "ai-update",
         title: "AI debate generated",
@@ -148,89 +279,122 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       });
       return belief;
     },
-    [persist, pushNotification]
+    [isAuthed, user, supabase, pushNotification]
   );
 
+  // ── Vote ───────────────────────────────────────────────────
   const voteBelief = useCallback(
     (beliefId: string, side: VoteSide) => {
-      setVotes((prev) => {
-        const nextVotes = { ...prev, [beliefId]: side };
-        persist({ votes: nextVotes });
-        return nextVotes;
-      });
-      setBeliefs((prev) =>
-        prev.map((b) => {
-          if (b.id !== beliefId) return b;
-          const prevSide = votes[beliefId];
-          const v = { ...b.votes };
-          if (prevSide) v[prevSide] = Math.max(0, v[prevSide] - 1);
-          v[side] += 1;
-          const total = v.believe + v.cope + v.neutral || 1;
-          const communityBelieve = (v.believe / total) * 100;
-          const conviction = Math.round(
-            communityBelieve * 0.4 + b.debate.consensus.believe * 0.35 + b.confidence * 0.25
-          );
-          return { ...b, votes: v, conviction, convictionLabel: convictionLabel(conviction) };
-        })
+      if (!requireAuth(isAuthed) || !userId) return;
+
+      const prevSide = votes[beliefId];
+      setVotes((prev) => ({ ...prev, [beliefId]: side }));
+
+      setDbBeliefs((prev) =>
+        prev.map((b) => (b.id === beliefId ? applyVoteToBelief(b, prevSide, side) : b))
       );
+
+      supabase
+        .from("belief_votes")
+        .upsert(
+          { belief_id: beliefId, user_id: userId, side },
+          { onConflict: "belief_id,user_id" }
+        )
+        .then(({ error }) => {
+          if (error) console.error("Failed to save vote:", error.message);
+        });
     },
-    [persist, votes]
+    [isAuthed, userId, votes, supabase]
   );
 
+  // ── Comment on a belief ────────────────────────────────────
   const addBeliefComment = useCallback(
     (beliefId: string, body: string, side?: VoteSide, isChallenge?: boolean) => {
+      if (!requireAuth(isAuthed) || !user) return;
+
+      const id =
+        typeof crypto !== "undefined" && crypto.randomUUID
+          ? crypto.randomUUID()
+          : `c_${Date.now()}`;
       const comment: Comment = {
-        id: uid("c"),
-        author: currentUser,
+        id,
+        author: user,
         body,
         createdAt: new Date().toISOString(),
         side,
         likes: 0,
         isChallenge,
       };
-      setBeliefs((prev) =>
-        prev.map((b) =>
-          b.id === beliefId ? { ...b, comments: [comment, ...b.comments] } : b
+
+      const isSeed = seedBeliefs.some((b) => b.id === beliefId);
+      if (isSeed) {
+        setSeedComments((prev) => ({
+          ...prev,
+          [beliefId]: [comment, ...(prev[beliefId] ?? [])],
+        }));
+      } else {
+        setDbBeliefs((prev) =>
+          prev.map((b) =>
+            b.id === beliefId ? { ...b, comments: [comment, ...b.comments] } : b
+          )
+        );
+      }
+
+      supabase
+        .from("comments")
+        .insert({
+          id,
+          belief_id: beliefId,
+          user_id: user.id,
+          body,
+          side: side ?? null,
+          is_challenge: !!isChallenge,
+        })
+        .then(({ error }) => {
+          if (error) console.error("Failed to save comment:", error.message);
+        });
+    },
+    [isAuthed, user, supabase]
+  );
+
+  // ── Market comment (client-only demo) ──────────────────────
+  const addMarketComment = useCallback(
+    (marketId: string, body: string) => {
+      if (!requireAuth(isAuthed) || !user) return;
+      const comment: Comment = {
+        id: `c_${Date.now()}`,
+        author: user,
+        body,
+        createdAt: new Date().toISOString(),
+        likes: 0,
+      };
+      setMarkets((prev) =>
+        prev.map((m) =>
+          m.id === marketId ? { ...m, comments: [comment, ...m.comments] } : m
         )
       );
     },
-    []
+    [isAuthed, user]
   );
 
-  const addMarketComment = useCallback((marketId: string, body: string) => {
-    const comment: Comment = {
-      id: uid("c"),
-      author: currentUser,
-      body,
-      createdAt: new Date().toISOString(),
-      likes: 0,
-    };
-    setMarkets((prev) =>
-      prev.map((m) =>
-        m.id === marketId ? { ...m, comments: [comment, ...m.comments] } : m
-      )
-    );
-  }, []);
-
+  // ── Trade (client-only demo, play-money) ───────────────────
   const trade = useCallback(
     (marketId: string, side: "believe" | "cope", shares: number) => {
+      if (!requireAuth(isAuthed)) return;
       const market = markets.find((m) => m.id === marketId);
       if (!market || shares <= 0) return;
       const price = side === "believe" ? market.yes : 100 - market.yes;
       setPositions((prev) => {
         const existing = prev.find((p) => p.marketId === marketId && p.side === side);
-        let next: Position[];
         if (existing) {
           const totalShares = existing.shares + shares;
-          const avg = (existing.avgPrice * existing.shares + price * shares) / totalShares;
-          next = prev.map((p) =>
+          const avg =
+            (existing.avgPrice * existing.shares + price * shares) / totalShares;
+          return prev.map((p) =>
             p === existing ? { ...p, shares: totalShares, avgPrice: avg } : p
           );
-        } else {
-          next = [...prev, { marketId, side, shares, avgPrice: price }];
         }
-        persist({ positions: next });
-        return next;
+        return [...prev, { marketId, side, shares, avgPrice: price }];
       });
       setMarkets((prev) =>
         prev.map((m) => {
@@ -247,7 +411,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         })
       );
     },
-    [markets, persist]
+    [isAuthed, markets]
   );
 
   const markAllRead = useCallback(() => {
@@ -265,6 +429,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     notifications,
     positions,
     votes,
+    isAuthed,
     submitBelief,
     voteBelief,
     addBeliefComment,

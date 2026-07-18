@@ -1,7 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { currentUser } from "@/lib/data";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/lib/auth";
+import { createClient } from "@/lib/supabase/client";
 import { Avatar } from "@/components/ui/Avatar";
 import { Tabs } from "@/components/ui/Tabs";
 import { cn } from "@/lib/utils";
@@ -47,15 +50,59 @@ function Saved({ show }: { show: boolean }) {
 }
 
 function ProfileSettings() {
-  const [name, setName] = useState(currentUser.name);
-  const [username, setUsername] = useState(currentUser.username);
-  const [bio, setBio] = useState(currentUser.bio);
+  const { user, loading, refreshProfile } = useAuth();
+  const [name, setName] = useState("");
+  const [username, setUsername] = useState("");
+  const [bio, setBio] = useState("");
+  const [initialized, setInitialized] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Seed the form once the profile loads.
+  if (user && !initialized) {
+    setName(user.name);
+    setUsername(user.username);
+    setBio(user.bio);
+    setInitialized(true);
+  }
+
+  if (loading) {
+    return <div className="card p-6 text-sm text-content-secondary">Loading…</div>;
+  }
+  if (!user) {
+    return (
+      <div className="card p-6">
+        <p className="text-sm text-content-secondary">Sign in to manage your profile.</p>
+        <Link href="/sign-in" className="btn-primary mt-4 h-10 px-5">
+          Sign in
+        </Link>
+      </div>
+    );
+  }
+
+  const save = async () => {
+    setSaving(true);
+    setError(null);
+    const supabase = createClient();
+    const { error } = await supabase
+      .from("profiles")
+      .update({ name, username, bio })
+      .eq("id", user.id);
+    setSaving(false);
+    if (error) {
+      setError(error.message);
+      return;
+    }
+    await refreshProfile();
+    setSaved(true);
+    setTimeout(() => setSaved(false), 1600);
+  };
 
   return (
     <div className="card p-6">
       <div className="mb-6 flex items-center gap-4">
-        <Avatar src={currentUser.avatar} alt={currentUser.name} size={64} ring />
+        <Avatar src={user.avatar} alt={user.name} size={64} ring />
         <button className="btn-secondary h-9 px-4">Change avatar</button>
       </div>
       <div className="space-y-4">
@@ -65,7 +112,13 @@ function ProfileSettings() {
         </div>
         <div>
           <label className="label mb-1.5 block">Username</label>
-          <input className="input" value={username} onChange={(e) => setUsername(e.target.value)} />
+          <input
+            className="input"
+            value={username}
+            onChange={(e) =>
+              setUsername(e.target.value.replace(/[^a-zA-Z0-9_]/g, "").toLowerCase())
+            }
+          />
         </div>
         <div>
           <label className="label mb-1.5 block">Bio</label>
@@ -76,15 +129,14 @@ function ProfileSettings() {
           />
         </div>
       </div>
+      {error && (
+        <p className="mt-4 rounded-xl border border-bearish/30 bg-bearish/10 px-3 py-2 text-sm text-bearish">
+          {error}
+        </p>
+      )}
       <div className="mt-6 flex items-center gap-3">
-        <button
-          onClick={() => {
-            setSaved(true);
-            setTimeout(() => setSaved(false), 1600);
-          }}
-          className="btn-primary h-10 px-6"
-        >
-          Save changes
+        <button onClick={save} disabled={saving} className="btn-primary h-10 px-6">
+          {saving ? "Saving…" : "Save changes"}
         </button>
         <Saved show={saved} />
       </div>
@@ -162,28 +214,51 @@ function AppearanceSettings() {
 }
 
 function AccountSettings() {
+  const { user, email, signOut } = useAuth();
+  const router = useRouter();
+
+  const handleSignOut = async () => {
+    await signOut();
+    router.push("/");
+    router.refresh();
+  };
+
+  if (!user) {
+    return (
+      <div className="card p-6">
+        <p className="text-sm text-content-secondary">You are browsing as a guest.</p>
+        <Link href="/sign-in" className="btn-primary mt-4 h-10 px-5">
+          Sign in
+        </Link>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <div className="card p-6">
-        <h3 className="text-sm font-semibold">Connected accounts</h3>
+        <h3 className="text-sm font-semibold">Account</h3>
         <p className="mt-1 text-xs text-content-secondary">
-          Authentication is managed by Clerk in production.
+          Authentication is powered by Supabase.
         </p>
         <div className="mt-4 space-y-2">
           <div className="flex items-center justify-between rounded-xl border border-border bg-white/[0.02] p-3">
-            <span className="text-sm">Google</span>
-            <span className="text-xs text-content-secondary">Not connected</span>
+            <span className="text-sm">Email</span>
+            <span className="text-xs text-content-secondary">{email ?? "—"}</span>
           </div>
           <div className="flex items-center justify-between rounded-xl border border-border bg-white/[0.02] p-3">
-            <span className="text-sm">Apple</span>
-            <span className="text-xs text-content-secondary">Not connected</span>
+            <span className="text-sm">Username</span>
+            <span className="text-xs text-content-secondary">@{user.username}</span>
           </div>
         </div>
+        <button onClick={handleSignOut} className="btn-secondary mt-4 h-10 px-5">
+          Sign out
+        </button>
       </div>
       <div className="card border-bearish/20 p-6">
         <h3 className="text-sm font-semibold text-bearish">Danger zone</h3>
         <p className="mt-1 text-xs text-content-secondary">
-          Permanently delete your account and all data.
+          Permanently delete your account and all data. Contact support to proceed.
         </p>
         <button className="btn-bearish mt-4 h-10 px-5">Delete account</button>
       </div>
