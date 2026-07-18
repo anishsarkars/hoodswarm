@@ -3,30 +3,19 @@ import { LogoMark } from "./Logo";
 
 const COLUMNS: { title: string; links: { label: string; href: string }[] }[] = [
   {
-    title: "Learn",
-    links: [
-      { label: "How it works", href: "/" },
-      { label: "AI Debate", href: "/beliefs" },
-      { label: "Conviction Score", href: "/beliefs" },
-      { label: "Resolution", href: "/markets" },
-    ],
-  },
-  {
-    title: "Product",
+    title: "Explore",
     links: [
       { label: "Beliefs", href: "/beliefs" },
       { label: "Markets", href: "/markets" },
       { label: "Leaderboard", href: "/leaderboard" },
-      { label: "Profile", href: "/profile" },
     ],
   },
   {
-    title: "Legal",
+    title: "Account",
     links: [
-      { label: "Terms", href: "/" },
-      { label: "Privacy", href: "/" },
-      { label: "Disclosures", href: "/" },
-      { label: "For entertainment only", href: "/" },
+      { label: "Profile", href: "/profile" },
+      { label: "Settings", href: "/settings" },
+      { label: "Sign in", href: "/sign-in" },
     ],
   },
 ];
@@ -35,7 +24,7 @@ export function SiteFooter() {
   return (
     <footer className="mt-8 border-t border-border">
       <div className="container-content py-12">
-        <div className="grid grid-cols-2 gap-8 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-8 sm:grid-cols-3">
           <div className="col-span-2 sm:col-span-1">
             <div className="flex items-center gap-2.5 font-semibold">
               <LogoMark />
@@ -65,7 +54,7 @@ export function SiteFooter() {
         </div>
         <div className="mt-10 flex flex-col items-center justify-between gap-3 border-t border-border pt-6 text-xs text-content-secondary/60 sm:flex-row">
           <span>© {new Date().getFullYear()} HoodSwarm. Where conviction becomes markets.</span>
-          <span>For research and entertainment. Play-money markets, not advice.</span>
+          <span>For research and entertainment. Play-money markets, not advice. build by @anishsarkars</span>
         </div>
       </div>
     </footer>
