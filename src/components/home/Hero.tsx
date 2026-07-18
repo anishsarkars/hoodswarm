@@ -31,9 +31,9 @@ export function Hero() {
   const submit = () => setOpen(true);
 
   return (
-    <section className="relative overflow-hidden">
+    <section className="relative -mt-[72px] overflow-hidden">
       <video
-        className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-[0.35]"
+        className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-[0.7]"
         autoPlay
         loop
         muted
@@ -41,11 +41,10 @@ export function Hero() {
         aria-hidden
         src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/bg-hero-0BnFGdr81Ifnj3WbBZoNt1KE4D5DMT.mp4"
       />
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-background/50 via-background/75 to-background" />
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-[520px] grid-dots opacity-40" />
-      <div className="pointer-events-none absolute left-1/2 top-[-80px] h-[420px] w-[720px] -translate-x-1/2 rounded-full bg-primary/[0.07] blur-[130px]" />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-background/20 via-background/45 to-background" />
+      <div className="pointer-events-none absolute left-1/2 top-[-80px] h-[420px] w-[720px] -translate-x-1/2 rounded-full bg-primary/[0.06] blur-[130px]" />
 
-      <div className="container-narrow relative pt-16 pb-4 sm:pt-24">
+      <div className="container-narrow relative pt-32 pb-4 sm:pt-40">
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -56,11 +55,11 @@ export function Hero() {
             <LogoMark className="h-14 w-14" />
           </div>
 
-          <h1 className="text-balance text-4xl font-bold leading-[1.05] tracking-tight sm:text-5xl">
+          <h1 className="text-balance text-4xl font-bold leading-[1.05] tracking-tight [text-shadow:_0_2px_24px_rgba(0,0,0,0.55)] sm:text-5xl">
             What do you believe?
           </h1>
 
-          <p className="mt-4 max-w-lg text-balance text-base text-content-secondary">
+          <p className="mt-4 max-w-lg text-balance text-base text-content-secondary [text-shadow:_0_1px_16px_rgba(0,0,0,0.5)]">
             Any opinion, any topic — tech, culture, sports, science, politics, and
             everything in between.
           </p>

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Bell, Menu, Search, X } from "lucide-react";
 import { Logo } from "./Logo";
 import { SearchDialog } from "./SearchDialog";
@@ -28,6 +28,17 @@ export function Navbar() {
   const [notif, setNotif] = useState(false);
   const [menu, setMenu] = useState(false);
   const [profileMenu, setProfileMenu] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 24);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // Blend into the hero at the top of the home page; solidify on scroll.
+  const transparent = pathname === "/" && !scrolled && !menu;
 
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(href + "/");
@@ -42,7 +53,14 @@ export function Navbar() {
 
   return (
     <>
-      <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur-xl">
+      <header
+        className={cn(
+          "sticky top-0 z-40 transition-colors duration-300",
+          transparent
+            ? "border-b border-transparent bg-transparent"
+            : "border-b border-border bg-background/80 backdrop-blur-xl"
+        )}
+      >
         <div className="container-content flex h-16 items-center justify-between gap-4">
           <div className="flex items-center gap-8">
             <Logo />
