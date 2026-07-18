@@ -5,11 +5,10 @@ import Link from "next/link";
 import { useStore } from "@/lib/store";
 import { similarBeliefs } from "@/lib/data";
 import type { Belief } from "@/lib/types";
-import { Avatar } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
 import { AIDebate } from "@/components/thesis/AIDebate";
 import { WhereDoYouStand, Discussion } from "@/components/thesis/CommunityVoting";
-import { categoryColor, cn, timeAgo } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import {
   ArrowLeft,
   ArrowRight,
@@ -25,7 +24,7 @@ const MAX_CHALLENGES = 5;
 
 const STATUS_META: Record<Belief["status"], { label: string; cls: string }> = {
   open: { label: "Open Belief", cls: "border-primary/25 bg-primary/10 text-primary" },
-  debating: { label: "Active Debate", cls: "border-ai/25 bg-ai/10 text-ai" },
+  debating: { label: "Active Debate", cls: "border-primary/25 bg-primary/10 text-primary" },
   market: { label: "Live Market", cls: "border-bullish/25 bg-bullish/10 text-bullish" },
   resolved: { label: "Resolved", cls: "border-white/15 bg-white/[0.06] text-content-secondary" },
 };
@@ -125,22 +124,6 @@ function PinnedBeliefCard({ belief }: { belief: Belief }) {
         <p className="mt-2 text-sm text-content-secondary">
           Being stress-tested by the HoodSwarm Engine.
         </p>
-
-        <div className="mt-4 flex flex-wrap items-center gap-2 text-sm">
-          <Avatar src={belief.author.avatar} alt={belief.author.name} size={24} />
-          <Link
-            href={`/profile/${belief.author.username}`}
-            className="font-medium hover:underline"
-          >
-            {belief.author.name}
-          </Link>
-          <span className="text-content-secondary/40">·</span>
-          <Badge className={cn("border-border bg-white/[0.03]", categoryColor(belief.category))}>
-            {belief.category}
-          </Badge>
-          <span className="text-content-secondary/40">·</span>
-          <span className="text-xs text-content-secondary">{timeAgo(belief.createdAt)}</span>
-        </div>
       </div>
 
       <div className="border-t border-border px-5 py-4 sm:px-6">
