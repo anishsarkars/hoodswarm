@@ -39,7 +39,7 @@ export function Hero() {
         muted
         playsInline
         aria-hidden
-        src="https://cdn.sceneai.art/backgrounds/deafea03-6d98-4046-b775-786a3e92ec66.mp4"
+        src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/bg-hero-0BnFGdr81Ifnj3WbBZoNt1KE4D5DMT.mp4"
       />
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-background/50 via-background/75 to-background" />
       <div className="pointer-events-none absolute inset-x-0 top-0 h-[520px] grid-dots opacity-40" />

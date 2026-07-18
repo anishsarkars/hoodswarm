@@ -61,7 +61,7 @@ interface StoreState {
   positions: Position[];
   votes: Record<string, VoteSide>; // beliefId -> side
   isAuthed: boolean;
-  submitBelief: (input: SubmitBeliefInput) => Belief | null;
+  submitBelief: (input: SubmitBeliefInput) => Promise<Belief | null>;
   voteBelief: (beliefId: string, side: VoteSide) => void;
   addBeliefComment: (
     beliefId: string,
@@ -209,17 +209,35 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   // ── Submit a belief ────────────────────────────────────────
   const submitBelief = useCallback(
-    (input: SubmitBeliefInput): Belief | null => {
+    async (input: SubmitBeliefInput): Promise<Belief | null> => {
       if (!requireAuth(isAuthed) || !user) return null;
 
-      const debate = generateDebate({
+      const seed = {
         title: input.title,
         topic: input.topic,
         category: input.category,
         confidence: input.confidence,
         timeHorizon: input.timeHorizon,
         description: input.description,
-      });
+      };
+
+      // Ask the NVIDIA-backed debate engine; fall back to the local engine.
+      let debate;
+      try {
+        const res = await fetch("/api/debate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(seed),
+        });
+        if (res.ok) {
+          const json = await res.json();
+          debate = json.debate;
+        }
+      } catch (err) {
+        console.error("Debate request failed, using local engine:", err);
+      }
+      if (!debate) debate = generateDebate(seed);
+
       const conviction = Math.round(
         debate.consensus.believe * 0.4 + input.confidence * 0.35 + 55 * 0.25
       );

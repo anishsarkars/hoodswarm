@@ -54,9 +54,10 @@ export function SubmitBeliefModal({
     setPhase("form");
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!canSubmit) return;
-    const belief = submitBelief({
+    setPhase("spawning");
+    const belief = await submitBelief({
       title: title.trim(),
       prediction: prediction.trim() || title.trim(),
       topic: topic.trim() || category,
@@ -69,14 +70,14 @@ export function SubmitBeliefModal({
       riskFactors: risks.map((s) => s.trim()).filter(Boolean),
     });
     // Guests are redirected to sign-in by the store; nothing to spawn.
-    if (!belief) return;
-    setPhase("spawning");
-    setTimeout(() => {
-      onClose();
-      reset();
-      setTitle("");
-      router.push(`/beliefs/${belief.id}`);
-    }, 2200);
+    if (!belief) {
+      setPhase("form");
+      return;
+    }
+    onClose();
+    reset();
+    setTitle("");
+    router.push(`/beliefs/${belief.id}`);
   };
 
   const updateList = (
