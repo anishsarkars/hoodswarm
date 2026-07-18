@@ -73,7 +73,7 @@ export function BeliefListFeed({
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search beliefs and topics…"
+            placeholder="Search beliefs..."
             className="input h-12 rounded-2xl pl-11"
           />
         </div>

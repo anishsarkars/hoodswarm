@@ -61,26 +61,25 @@ export function Navbar() {
             : "border-b border-border bg-background/80 backdrop-blur-xl"
         )}
       >
-        <div className="container-content flex h-16 items-center justify-between gap-4">
-          <div className="flex items-center gap-8">
-            <Logo variant={pathname === "/" ? "text" : "mark"} />
-            <nav className="hidden items-center gap-1 md:flex">
-              {NAV.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    "rounded-full px-4 py-2 text-sm font-medium transition-colors",
-                    isActive(item.href)
-                      ? "text-white"
-                      : "text-content-secondary hover:text-white"
-                  )}
-                >
-                  {item.label}
-                </Link>
-              ))}
-            </nav>
-          </div>
+        <div className="container-content relative flex h-16 items-center justify-between gap-4">
+          <Logo variant={pathname === "/" ? "text" : "mark"} />
+
+          <nav className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center gap-1 rounded-full border border-border bg-white/[0.03] p-1 md:flex">
+            {NAV.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
+                  isActive(item.href)
+                    ? "bg-white/[0.06] text-white"
+                    : "text-content-secondary hover:text-white"
+                )}
+              >
+                {item.label}
+              </Link>
+            ))}
+          </nav>
 
           <div className="flex items-center gap-1.5">
             <button
@@ -167,8 +166,11 @@ export function Navbar() {
                 </AnimatePresence>
               </div>
             ) : (
-              <Link href="/sign-in" className="btn-primary hidden h-9 px-4 md:inline-flex">
-                Sign In
+              <Link
+                href="/sign-in"
+                className="hidden h-9 items-center rounded-full border border-border bg-white/[0.05] px-4 text-sm font-medium text-white transition-colors hover:bg-white/[0.1] md:inline-flex"
+              >
+                Sign in
               </Link>
             )}
 

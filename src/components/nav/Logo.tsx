@@ -34,10 +34,15 @@ export function Logo({
     <Link
       href="/"
       aria-label="HoodSwarm home"
-      className={cn("flex items-center gap-2.5 font-semibold tracking-tight", className)}
+      className={cn("flex items-center", className)}
     >
-      {variant !== "text" && <LogoMark />}
-      {variant !== "mark" && <span className="text-[17px]">HoodSwarm</span>}
+      {variant === "mark" ? (
+        <LogoMark />
+      ) : (
+        <span className="rounded-lg border-[1.5px] border-primary px-2.5 py-1 text-[15px] font-extrabold tracking-tight text-primary">
+          HoodSwarm
+        </span>
+      )}
     </Link>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowUp, Bot } from "lucide-react";
+import { ArrowUp } from "lucide-react";
 import { LogoMark } from "@/components/nav/Logo";
 import { SubmitBeliefModal } from "@/components/thesis/SubmitThesisModal";
 import { motion } from "framer-motion";
@@ -59,11 +59,6 @@ export function Hero() {
             What do you believe?
           </h1>
 
-          <p className="mt-4 max-w-lg text-balance text-base text-content-secondary [text-shadow:_0_1px_16px_rgba(0,0,0,0.5)]">
-            Any opinion, any topic — tech, culture, sports, science, politics, and
-            everything in between.
-          </p>
-
           <div className="mt-8 w-full">
             <div className="group relative rounded-3xl border border-border bg-card p-2 transition-colors focus-within:border-primary/40">
               <textarea
@@ -79,14 +74,10 @@ export function Hero() {
                 placeholder={EXAMPLES[exampleIdx]}
                 className="max-h-40 min-h-[64px] w-full resize-none bg-transparent px-4 pt-3 pb-12 text-base text-white outline-none placeholder:text-content-secondary/60"
               />
-              <div className="absolute inset-x-3 bottom-3 flex items-center justify-between">
-                <span className="flex items-center gap-1.5 text-xs text-content-secondary/70">
-                  <Bot className="h-3.5 w-3.5 text-ai" />
-                  7 AI analysts
-                </span>
+              <div className="absolute inset-x-3 bottom-3 flex items-center justify-end">
                 <button
                   onClick={submit}
-                  aria-label="Submit thesis"
+                  aria-label="Submit belief"
                   className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground transition-all hover:brightness-105 active:scale-95"
                 >
                   <ArrowUp className="h-4 w-4" strokeWidth={2.5} />
@@ -95,8 +86,8 @@ export function Hero() {
             </div>
           </div>
 
-          <p className="mt-4 text-xs text-content-secondary/70">
-            Share a opinion about anything. The swarm ai agents debates it. Conviction becomes markets. Based on Robinhood.
+          <p className="mt-4 text-sm text-content-secondary/80">
+            Share a belief. Let the AI agents debate it.
           </p>
         </motion.div>
       </div>
