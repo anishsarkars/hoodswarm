@@ -32,11 +32,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const loadProfile = useCallback(
     async (uid: string, mail: string | null) => {
-      const { data } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", uid)
-        .maybeSingle();
+      let data: unknown = null;
+      try {
+        const res = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", uid)
+          .maybeSingle();
+        data = res.data;
+      } catch (err) {
+        console.error("Profile load failed:", err);
+      }
 
       if (data) {
         setUser(profileToUser(data as ProfileRow));
@@ -59,20 +65,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   const bootstrap = useCallback(async () => {
-    const {
-      data: { user: authUser },
-    } = await supabase.auth.getUser();
+    try {
+      const {
+        data: { user: authUser },
+      } = await supabase.auth.getUser();
 
-    if (authUser) {
-      setUserId(authUser.id);
-      setEmail(authUser.email ?? null);
-      await loadProfile(authUser.id, authUser.email ?? null);
-    } else {
+      if (authUser) {
+        setUserId(authUser.id);
+        setEmail(authUser.email ?? null);
+        await loadProfile(authUser.id, authUser.email ?? null);
+      } else {
+        setUserId(null);
+        setEmail(null);
+        setUser(null);
+      }
+    } catch (err) {
+      // Missing/invalid Supabase config — run in guest mode instead of crashing.
+      console.error("Auth bootstrap failed:", err);
       setUserId(null);
       setEmail(null);
       setUser(null);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, [supabase, loadProfile]);
 
   useEffect(() => {
