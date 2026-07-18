@@ -96,7 +96,7 @@ export function Hero() {
           </div>
 
           <p className="mt-4 text-xs text-content-secondary/70">
-            Share a belief about anything. The swarm debates it. Conviction becomes markets.
+            Share a opinion about anything. The swarm ai agents debates it. Conviction becomes markets. Based on Robinhood.
           </p>
         </motion.div>
       </div>

@@ -68,7 +68,7 @@ export function PulseLiveCard({ market }: { market: Market }) {
       <div className="mt-4">
         <div className="mb-1.5 flex items-center justify-between text-sm">
           <span className="font-semibold text-bullish">Believe {market.yes}%</span>
-          <span className="font-semibold text-bearish">Cope {100 - market.yes}%</span>
+          <span className="font-semibold text-bearish">Hood {100 - market.yes}%</span>
         </div>
         <div className="flex h-2 overflow-hidden rounded-full bg-white/[0.05]">
           <div className="bg-bullish/80" style={{ width: `${market.yes}%` }} />
@@ -78,7 +78,7 @@ export function PulseLiveCard({ market }: { market: Market }) {
 
       <div className="mt-4 flex items-center gap-2 border-t border-border pt-4 text-xs text-content-secondary">
         <Zap className="h-3.5 w-3.5 text-warning" />
-        <span>Open · {market.yes >= 50 ? "Believe" : "Cope"} leading</span>
+        <span>Open · {market.yes >= 50 ? "Believe" : "Hood"} leading</span>
         <span className="text-content-secondary/40">·</span>
         <span>{formatNumber(market.participants, true)} participants</span>
         <span className="ml-auto hidden sm:inline">Auto-resolves from {market.resolutionSource}</span>

@@ -27,7 +27,7 @@ const ROLE_ICON: Record<AgentRole, string> = {
 
 const STANCE: Record<VoteSide, { label: string; cls: string; color: string }> = {
   believe: { label: "Believe", cls: "text-bullish border-bullish/20 bg-bullish/10", color: "#22C55E" },
-  cope: { label: "Cope", cls: "text-bearish border-bearish/20 bg-bearish/10", color: "#EF4444" },
+  cope: { label: "Hood", cls: "text-bearish border-bearish/20 bg-bearish/10", color: "#EF4444" },
   neutral: { label: "Neutral", cls: "text-content-secondary border-white/10 bg-white/[0.04]", color: "#A1A1AA" },
 };
 
@@ -119,7 +119,7 @@ function ConsensusCard({ debate }: { debate: Debate }) {
         <p className="mt-4 text-sm text-content-secondary">
           The swarm leans{" "}
           <span className={c.believe >= 50 ? "font-semibold text-bullish" : "font-semibold text-bearish"}>
-            {c.believe >= 50 ? "believe" : "cope"}
+            {c.believe >= 50 ? "believe" : "hood"}
           </span>{" "}
           with {c.confidence.toLowerCase()} confidence. Aggregated probability this belief
           proves true is <span className="font-semibold text-white">{c.probability}%</span>.

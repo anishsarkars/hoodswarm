@@ -3,7 +3,7 @@
 import { useState } from "react";
 import type { Market } from "@/lib/types";
 import { useStore } from "@/lib/store";
-import { cn, formatPoints } from "@/lib/utils";
+import { cn, formatPoints, sideLabel } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
 import { Check } from "lucide-react";
 
@@ -50,7 +50,7 @@ export function TradingPanel({ market }: { market: Market }) {
               : "text-content-secondary hover:bg-white/[0.02]"
           )}
         >
-          Cope · {100 - live.yes}¢
+          Hood · {100 - live.yes}¢
         </button>
       </div>
 
@@ -113,7 +113,7 @@ export function TradingPanel({ market }: { market: Market }) {
               </motion.span>
             ) : (
               <motion.span key="buy" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                Back {side === "believe" ? "Believe" : "Cope"} · {formatPoints(amount)}
+                Back {side === "believe" ? "Believe" : "Hood"} · {formatPoints(amount)}
               </motion.span>
             )}
           </AnimatePresence>
@@ -130,11 +130,11 @@ export function TradingPanel({ market }: { market: Market }) {
               <div key={i} className="flex items-center justify-between py-1 text-sm">
                 <span
                   className={cn(
-                    "font-semibold capitalize",
+                    "font-semibold",
                     p.side === "believe" ? "text-bullish" : "text-bearish"
                   )}
                 >
-                  {p.side} · {p.shares} shares
+                  {sideLabel(p.side)} · {p.shares} shares
                 </span>
                 <span className="text-content-secondary">@ {p.avgPrice.toFixed(0)}¢</span>
               </div>

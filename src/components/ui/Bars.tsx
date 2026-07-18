@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 
-// Horizontal Believe/Cope probability split bar
+// Horizontal Believe/Hood probability split bar
 export function ProbabilitySplit({
   yes,
   className,
@@ -15,7 +15,7 @@ export function ProbabilitySplit({
     <div className={cn("w-full", className)}>
       <div className="mb-1.5 flex items-center justify-between text-sm">
         <span className="font-semibold text-bullish">Believe {yes}%</span>
-        <span className="font-semibold text-bearish">Cope {no}%</span>
+        <span className="font-semibold text-bearish">Hood {no}%</span>
       </div>
       <div
         className={cn(
@@ -42,7 +42,7 @@ export function ConsensusBar({
     <div className={cn("w-full", className)}>
       <div className="mb-2 flex items-center justify-between text-sm">
         <span className="font-semibold text-bullish">Believe {believe}%</span>
-        <span className="font-semibold text-bearish">Cope {cope}%</span>
+        <span className="font-semibold text-bearish">Hood {cope}%</span>
       </div>
       <div className="flex h-3 w-full overflow-hidden rounded-full bg-white/[0.04]">
         <div className="h-full bg-bullish" style={{ width: `${believe}%` }} />

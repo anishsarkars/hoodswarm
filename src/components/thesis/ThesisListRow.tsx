@@ -37,7 +37,7 @@ export function BeliefListRow({ belief }: { belief: Belief }) {
           <Dot />
           <span className="text-bullish">Believe {believe}%</span>
           <Dot />
-          <span className="text-bearish">Cope {cope}%</span>
+          <span className="text-bearish">Hood {cope}%</span>
           <Dot />
           <span className="text-primary">{belief.conviction} conviction</span>
         </div>

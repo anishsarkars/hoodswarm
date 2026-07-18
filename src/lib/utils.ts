@@ -117,3 +117,11 @@ export function clamp(n: number, min: number, max: number): number {
 export function uid(prefix = "id"): string {
   return `${prefix}_${Math.random().toString(36).slice(2, 9)}`;
 }
+
+// User-facing label for a vote side. Internally the "against" side is still
+// stored as "cope" (DB + debate JSON); the swarm just calls it "Hood".
+export function sideLabel(side: "believe" | "cope" | "neutral"): string {
+  if (side === "believe") return "Believe";
+  if (side === "cope") return "Hood";
+  return "Neutral";
+}

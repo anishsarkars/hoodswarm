@@ -54,7 +54,7 @@ export function MarketCard({ market }: { market: Market }) {
           Believe · {market.yes}¢
         </Link>
         <Link href={`/markets/${market.id}`} className="btn-bearish h-9 flex-1">
-          Cope · {100 - market.yes}¢
+          Hood · {100 - market.yes}¢
         </Link>
       </div>
     </article>

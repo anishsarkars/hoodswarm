@@ -4,7 +4,7 @@ import { useState } from "react";
 import type { Belief, VoteSide } from "@/lib/types";
 import { useStore } from "@/lib/store";
 import { Avatar } from "@/components/ui/Avatar";
-import { cn, timeAgo } from "@/lib/utils";
+import { cn, sideLabel, timeAgo } from "@/lib/utils";
 import {
   BarChart3,
   Link2,
@@ -23,7 +23,7 @@ export function CommunityVoting({ belief }: { belief: Belief }) {
   const options: { side: VoteSide; label: string; icon: React.ElementType; cls: string; active: string }[] = [
     { side: "believe", label: "Believe", icon: ThumbsUp, cls: "hover:border-bullish/40 hover:bg-bullish/5", active: "border-bullish/50 bg-bullish/10 text-bullish" },
     { side: "neutral", label: "Neutral", icon: Minus, cls: "hover:border-white/20 hover:bg-white/5", active: "border-white/30 bg-white/[0.06] text-white" },
-    { side: "cope", label: "Cope", icon: ThumbsDown, cls: "hover:border-bearish/40 hover:bg-bearish/5", active: "border-bearish/50 bg-bearish/10 text-bearish" },
+    { side: "cope", label: "Hood", icon: ThumbsDown, cls: "hover:border-bearish/40 hover:bg-bearish/5", active: "border-bearish/50 bg-bearish/10 text-bearish" },
   ];
 
   return (
@@ -64,7 +64,7 @@ export function CommunityVoting({ belief }: { belief: Belief }) {
       {myVote && (
         <p className="mt-3 text-center text-xs text-content-secondary">
           You voted{" "}
-          <span className="font-semibold capitalize text-white">{myVote}</span>. Your
+          <span className="font-semibold text-white">{sideLabel(myVote)}</span>. Your
           vote updated the conviction score.
         </p>
       )}
@@ -92,7 +92,7 @@ export function WhereDoYouStand({ belief }: { belief: Belief }) {
           <span className="text-xs font-medium text-content-secondary">
             {takes} {takes === 1 ? "take" : "takes"}
           </span>
-          <span className="text-bearish">Cope {copePct}%</span>
+          <span className="text-bearish">Hood {copePct}%</span>
         </div>
 
         <div className="mt-2.5 flex h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
@@ -121,13 +121,13 @@ export function WhereDoYouStand({ belief }: { belief: Belief }) {
                 : "border-border bg-white/[0.02] text-bearish hover:border-bearish/40 hover:bg-bearish/5"
             )}
           >
-            <ThumbsDown className="h-4 w-4" /> Cope
+            <ThumbsDown className="h-4 w-4" /> Hood
           </button>
         </div>
 
         <p className="mt-3 text-center text-xs text-content-secondary/70">
           {myVote
-            ? `You picked ${myVote}. Your vote joins the room tally.`
+            ? `You picked ${sideLabel(myVote)}. Your vote joins the room tally.`
             : "Pick a side — your vote joins the room tally."}
         </p>
       </div>
@@ -168,7 +168,7 @@ export function Discussion({ belief }: { belief: Belief }) {
                 key={s}
                 onClick={() => setSide(side === s ? undefined : s)}
                 className={cn(
-                  "rounded-full border border-border px-2.5 py-1 text-xs font-medium capitalize transition-colors",
+                  "rounded-full border border-border px-2.5 py-1 text-xs font-medium transition-colors",
                   side === s
                     ? s === "believe"
                       ? "border-bullish/40 bg-bullish/10 text-bullish"
@@ -178,7 +178,7 @@ export function Discussion({ belief }: { belief: Belief }) {
                     : "text-content-secondary hover:text-white"
                 )}
               >
-                {s}
+                {sideLabel(s)}
               </button>
             ))}
             <button
@@ -216,7 +216,7 @@ export function Discussion({ belief }: { belief: Belief }) {
                 {c.side && (
                   <span
                     className={cn(
-                      "rounded-full px-1.5 py-0.5 text-[10px] font-semibold capitalize",
+                      "rounded-full px-1.5 py-0.5 text-[10px] font-semibold",
                       c.side === "believe"
                         ? "bg-bullish/10 text-bullish"
                         : c.side === "cope"
@@ -224,7 +224,7 @@ export function Discussion({ belief }: { belief: Belief }) {
                         : "bg-white/[0.06] text-content-secondary"
                     )}
                   >
-                    {c.side}
+                    {sideLabel(c.side)}
                   </span>
                 )}
                 {c.isChallenge && (
