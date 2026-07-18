@@ -71,8 +71,8 @@ export function MarketsBrowser() {
             className="input h-12 rounded-2xl pl-11"
           />
         </div>
-        <div className="flex items-center justify-between gap-3 overflow-x-auto pb-1 no-scrollbar">
-          <div className="flex gap-2">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
             <button
               onClick={() => setCategory("All")}
               className={cn("chip", category === "All" && "chip-active")}
@@ -89,7 +89,7 @@ export function MarketsBrowser() {
               </button>
             ))}
           </div>
-          <div className="flex shrink-0 items-center gap-1 rounded-full border border-border bg-white/[0.02] p-1">
+          <div className="flex shrink-0 items-center gap-1 self-start rounded-full border border-border bg-white/[0.02] p-1 sm:self-auto">
             {(["pool", "closing", "new"] as Sort[]).map((s) => (
               <button
                 key={s}

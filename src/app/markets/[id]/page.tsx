@@ -81,10 +81,10 @@ export default function MarketDetailPage() {
           </h1>
 
           {/* Price header */}
-          <div className="mt-6 flex items-end justify-between">
+          <div className="mt-6 flex flex-wrap items-end justify-between gap-3">
             <div>
               <p className="text-sm text-content-secondary">Believe probability</p>
-              <p className="text-5xl font-bold tabular-nums" style={{ color: chartColor }}>
+              <p className="text-4xl font-bold tabular-nums sm:text-5xl" style={{ color: chartColor }}>
                 {market.yes}
                 <span className="text-2xl">%</span>
               </p>
@@ -116,6 +116,11 @@ export default function MarketDetailPage() {
             <StatCard icon={Droplets} label="Pool" value={formatPoints(market.pool, true)} />
             <StatCard icon={Droplets} label="Liquidity" value={formatPoints(market.liquidity, true)} />
             <StatCard icon={Clock} label="Closes in" value={timeUntil(market.closesAt)} />
+          </div>
+
+          {/* Trading panel — inline on mobile, sticky sidebar on desktop */}
+          <div className="mt-6 lg:hidden">
+            <TradingPanel market={market} />
           </div>
 
           {/* Tabs */}
@@ -235,7 +240,9 @@ export default function MarketDetailPage() {
 
         {/* Sidebar */}
         <aside className="space-y-5 lg:sticky lg:top-24 lg:self-start">
-          <TradingPanel market={market} />
+          <div className="hidden lg:block">
+            <TradingPanel market={market} />
+          </div>
 
           {related.length > 0 && (
             <div className="card p-5">

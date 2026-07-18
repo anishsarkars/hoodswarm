@@ -80,8 +80,8 @@ export function BeliefListFeed({
       )}
 
       {showFilters && (
-        <div className="mb-1 flex items-center justify-between gap-3 overflow-x-auto pb-1 no-scrollbar">
-          <div className="flex gap-2">
+        <div className="mb-1 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
             <button
               onClick={() => setCategory("All")}
               className={cn("chip", category === "All" && "chip-active")}
@@ -98,7 +98,7 @@ export function BeliefListFeed({
               </button>
             ))}
           </div>
-          <div className="flex shrink-0 items-center gap-1 rounded-full border border-border bg-white/[0.02] p-1">
+          <div className="flex shrink-0 items-center gap-1 self-start rounded-full border border-border bg-white/[0.02] p-1 sm:self-auto">
             {(["recent", "conviction", "active"] as Sort[]).map((s) => (
               <button
                 key={s}
