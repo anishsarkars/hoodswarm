@@ -63,7 +63,7 @@ export function Navbar() {
       >
         <div className="container-content flex h-16 items-center justify-between gap-4">
           <div className="flex items-center gap-8">
-            <Logo />
+            <Logo variant={pathname === "/" ? "text" : "mark"} />
             <nav className="hidden items-center gap-1 md:flex">
               {NAV.map((item) => (
                 <Link

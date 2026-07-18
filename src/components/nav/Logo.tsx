@@ -23,14 +23,21 @@ export function LogoMark({ className }: { className?: string }) {
   );
 }
 
-export function Logo({ className }: { className?: string }) {
+export function Logo({
+  variant = "full",
+  className,
+}: {
+  variant?: "full" | "text" | "mark";
+  className?: string;
+}) {
   return (
     <Link
       href="/"
+      aria-label="HoodSwarm home"
       className={cn("flex items-center gap-2.5 font-semibold tracking-tight", className)}
     >
-      <LogoMark />
-      <span className="text-[17px]">HoodSwarm</span>
+      {variant !== "text" && <LogoMark />}
+      {variant !== "mark" && <span className="text-[17px]">HoodSwarm</span>}
     </Link>
   );
 }
