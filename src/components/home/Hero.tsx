@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowUp, Bot, Sparkles } from "lucide-react";
+import { ArrowUp, Bot } from "lucide-react";
 import { LogoMark } from "@/components/nav/Logo";
 import { SubmitBeliefModal } from "@/components/thesis/SubmitThesisModal";
 import { motion } from "framer-motion";
@@ -95,8 +95,7 @@ export function Hero() {
             </div>
           </div>
 
-          <p className="mt-4 flex items-center gap-1.5 text-sm text-content-secondary">
-            <Sparkles className="h-3.5 w-3.5 text-primary" />
+          <p className="mt-4 text-xs text-content-secondary/70">
             Share a belief about anything. The swarm debates it. Conviction becomes markets.
           </p>
         </motion.div>
