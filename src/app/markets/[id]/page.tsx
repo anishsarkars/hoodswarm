@@ -174,7 +174,9 @@ export default function MarketDetailPage() {
                       </div>
                     </div>
                   )}
-                  {active === "debate" && belief && <AIDebate debate={belief.debate} />}
+                  {active === "debate" && belief && (
+                    <AIDebate debate={belief.debate} title={belief.title} />
+                  )}
                   {active === "discussion" && (
                     <div className="card p-5">
                       <div className="mb-4 flex gap-2">

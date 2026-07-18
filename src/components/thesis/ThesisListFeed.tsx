@@ -14,10 +14,12 @@ export function BeliefListFeed({
   showSearch = false,
   showFilters = true,
   pageSize = 8,
+  variant = "compact",
 }: {
   showSearch?: boolean;
   showFilters?: boolean;
   pageSize?: number;
+  variant?: "compact" | "rich";
 }) {
   const { beliefs } = useStore();
   const [category, setCategory] = useState<Category | "All">("All");
@@ -117,7 +119,7 @@ export function BeliefListFeed({
 
       <div className="flex flex-col">
         {visible.map((b) => (
-          <BeliefListRow key={b.id} belief={b} />
+          <BeliefListRow key={b.id} belief={b} variant={variant} />
         ))}
       </div>
 

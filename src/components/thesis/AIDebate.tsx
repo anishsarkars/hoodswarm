@@ -1,13 +1,16 @@
 "use client";
 
-import type { AgentRole, Debate, VoteSide } from "@/lib/types";
+import type { Debate, VoteSide } from "@/lib/types";
 import { ConsensusBar, MeterBar } from "@/components/ui/Bars";
+import { Avatar } from "@/components/ui/Avatar";
+import { agentPersona, personaNames } from "@/lib/personas";
 import { cn } from "@/lib/utils";
 import {
   AlertTriangle,
   Bot,
   ChevronDown,
   History,
+  LayoutGrid,
   Rocket,
   ThumbsDown,
   ThumbsUp,
@@ -15,23 +18,14 @@ import {
 import { useState } from "react";
 import { motion } from "framer-motion";
 
-const ROLE_ICON: Record<AgentRole, string> = {
-  Advocate: "📣",
-  Skeptic: "🤨",
-  Historian: "📜",
-  Analyst: "📊",
-  Contrarian: "🔄",
-  "Fact Checker": "✅",
-  Ethicist: "⚖️",
-};
-
 const STANCE: Record<VoteSide, { label: string; cls: string; color: string }> = {
   believe: { label: "Believe", cls: "text-bullish border-bullish/20 bg-bullish/10", color: "#22C55E" },
   cope: { label: "Hood", cls: "text-bearish border-bearish/20 bg-bearish/10", color: "#EF4444" },
   neutral: { label: "Neutral", cls: "text-content-secondary border-white/10 bg-white/[0.04]", color: "#A1A1AA" },
 };
 
-export function AIDebate({ debate }: { debate: Debate }) {
+export function AIDebate({ debate, title }: { debate: Debate; title: string }) {
+  const roles = debate.agents.map((a) => a.role);
   return (
     <div className="space-y-8">
       <div>
@@ -39,7 +33,15 @@ export function AIDebate({ debate }: { debate: Debate }) {
           <Bot className="h-3.5 w-3.5 text-ai" />
           The Debate · {debate.agents.length} AI analysts
         </h3>
+
+        {roles.length > 0 && (
+          <p className="mb-1 text-center text-xs text-content-secondary/50">
+            HoodSwarm Engine added {personaNames(roles)}
+          </p>
+        )}
+
         <div className="space-y-1">
+          <EngineMessage title={title} />
           {debate.agents.map((a, i) => (
             <DebateMessage key={a.id} agent={a} index={i} />
           ))}
@@ -129,9 +131,27 @@ function ConsensusCard({ debate }: { debate: Debate }) {
   );
 }
 
+function EngineMessage({ title }: { title: string }) {
+  return (
+    <div className="flex gap-3 py-3">
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/15">
+        <LayoutGrid className="h-4 w-4 text-primary" />
+      </span>
+      <div className="min-w-0 flex-1">
+        <span className="text-sm font-semibold text-primary">HoodSwarm Engine</span>
+        <p className="mt-1.5 text-sm leading-relaxed text-content-secondary">
+          Let&apos;s dive into the belief that {title}. What makes it hold up — or are we
+          just caught in the hype?
+        </p>
+      </div>
+    </div>
+  );
+}
+
 function DebateMessage({ agent, index }: { agent: Debate["agents"][number]; index: number }) {
   const [open, setOpen] = useState(false);
   const stance = STANCE[agent.stance];
+  const persona = agentPersona(agent.role);
   return (
     <motion.div
       initial={{ opacity: 0, y: 6 }}
@@ -139,17 +159,15 @@ function DebateMessage({ agent, index }: { agent: Debate["agents"][number]; inde
       transition={{ delay: Math.min(index * 0.06, 0.4) }}
       className="flex gap-3 py-3"
     >
-      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/[0.04] text-lg">
-        {ROLE_ICON[agent.role]}
-      </span>
+      <Avatar src={persona.avatar} alt={persona.name} size={36} />
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-sm font-semibold">{agent.role}</span>
+          <span className="text-sm font-semibold">{persona.name}</span>
+          <span className="text-[11px] font-medium text-content-secondary/50">
+            {agent.role}
+          </span>
           <span className={cn("inline-flex rounded-full border px-1.5 py-0.5 text-[10px] font-semibold", stance.cls)}>
             {stance.label}
-          </span>
-          <span className="text-[11px] font-medium text-content-secondary/60">
-            {agent.probability}% true
           </span>
         </div>
 

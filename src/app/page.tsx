@@ -18,7 +18,7 @@ export default function HomePage() {
             View all <ArrowUpRight className="h-3.5 w-3.5" />
           </Link>
         </div>
-        <BeliefListFeed showFilters={false} pageSize={6} />
+        <BeliefListFeed showFilters={false} pageSize={6} variant="rich" />
       </section>
     </div>
   );

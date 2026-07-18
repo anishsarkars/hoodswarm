@@ -61,7 +61,7 @@ export default function BeliefDetailPage() {
       <div className="space-y-8">
         <PinnedBeliefCard belief={belief} />
 
-        <AIDebate debate={belief.debate} />
+        <AIDebate debate={belief.debate} title={belief.title} />
 
         <div className="border-t border-border" />
 
@@ -115,11 +115,8 @@ function PinnedBeliefCard({ belief }: { belief: Belief }) {
   return (
     <div className="card overflow-hidden">
       <div className="p-5 sm:p-6">
-        <div className="mb-3 flex items-center justify-between gap-3">
-          <span className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">
-            <Pin className="h-3.5 w-3.5" /> Pinned Belief
-          </span>
-          <Badge className={cn("border", status.cls)}>{status.label}</Badge>
+        <div className="mb-3 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">
+          <Pin className="h-3.5 w-3.5" /> Pinned Belief
         </div>
 
         <h1 className="text-balance text-2xl font-bold leading-tight tracking-tight sm:text-3xl">
@@ -147,10 +144,11 @@ function PinnedBeliefCard({ belief }: { belief: Belief }) {
       </div>
 
       <div className="border-t border-border px-5 py-4 sm:px-6">
-        <div className="flex items-center justify-between text-xs">
+        <div className="flex items-center justify-between gap-2 text-xs">
           <span className="font-medium text-content-secondary">
             Creator Attention · {remaining} / {MAX_CHALLENGES} challenges remaining
           </span>
+          <Badge className={cn("border", status.cls)}>{status.label}</Badge>
         </div>
         <div className="mt-2 flex gap-1.5">
           {Array.from({ length: MAX_CHALLENGES }).map((_, i) => (
